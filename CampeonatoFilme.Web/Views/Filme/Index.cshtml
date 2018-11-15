@@ -1,0 +1,130 @@
+﻿@model IEnumerable<CampeonatoFilme.Dominio.Entidade.Filme>
+
+@{
+    ViewBag.Title = "Seleção de filme";
+}
+
+<form>
+
+    <div class="jumbotron colorJumbotron">
+
+        <div class="col-lg-12">
+            <h5 class="text-center campeonatoFilme">CAMPEONATO DE FILMES</h5>
+        </div>
+
+        <div class="col-lg-12">
+            <h2 class="text-center"><strong class="colorFaseSelecao">Fase de Seleção</strong></h2>
+        </div>
+
+        <div class="row">
+            <hr size="10" class="linha">
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <p class="text-center colorFaseSelecao">Selecione 8 filmes que você deseja que entrem na competição e depois pressione o <br /> Gerar meu campeonato para prosseguir.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-lg-1">
+            <label>Selecionados <label id="lblContador">0</label> de 8 filmes</label>
+        </div>
+
+        <div class="col-lg-2 col-lg-push-9 ">
+            <button id="btnGerarCampeonato" class="btn btn-default botao" type="button"><span style="color:white">Gerar meu campeonato</span></button>
+        </div>
+
+    </div>
+
+    <div class="row">
+
+
+        @foreach (var item in Model)
+        {
+
+            <div class="col-lg-3 colorFaseSelecao divBox">
+
+                <div class="form-check">
+                    <input type="checkbox" class="ckbFilme" id="@item.id" value="@item.id" />
+                </div>
+                <label>@item.titulo</label> <br /> <label>@item.ano</label>
+
+            </div>
+        }
+
+    </div>
+
+</form>
+
+@Styles.Render("~/Content/css")
+@Scripts.Render("~/bundles/jquery")
+@Scripts.Render("~/bundles/bootstrap")
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js"></script>
+
+<script>
+
+    var filmesSelecionados = [];
+    var filmes = [];
+    var quantidadeSelecionado = 0;
+
+    filmes = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model));
+
+    $('.ckbFilme').on('click', function () {
+
+        quantidadeSelecionado = $("input:checked").length;
+
+        $("#lblContador").text(quantidadeSelecionado);
+
+        var id = $(this).val();
+
+        $.each(filmes, function (i, e) {
+
+            var filme = {};
+
+            if (id == e.id) {
+                filme.id = e.id;
+                filme.titulo = e.titulo;
+                filme.ano = e.ano;
+                filme.nota = e.nota;
+
+                filmesSelecionados.push(filme);
+
+                return false;
+            };
+
+        });
+
+    });
+
+    $('#btnGerarCampeonato').on('click', function () {
+
+        if (quantidadeSelecionado < 8) {
+            swal("Alerta!", "Selecione 8 Filmes !", "warning");
+            return false;
+        };
+
+        if (quantidadeSelecionado > 8) {
+            swal("Alerta!", "Selecione somente 8 filmes !", "warning");
+            return false;
+        };
+
+        $.ajax({
+            url: "@Url.Action("ResultadoCampeonato", "Filme")",
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ filmesSelecionados: filmesSelecionados}),
+            success: function (data) {
+                $('form').html(data);
+            },
+            error: function (request, status, erro) {
+                swal("Oops...!", "Deu Ruimmm", "error");
+                return false;
+            }
+        });
+
+    });
+
+</script>
